@@ -76,6 +76,14 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 .cc-contact.has::before { content: "📞 "; }
 .cc-contact.locked { color: #ffd6a8; opacity: 0.95; }
 .cc-contact.locked::before { content: "🔒 "; }
+.cc-contact-block { margin-top: 6px; font-size: 0.74rem; }
+.cc-via { opacity: 0.95; }
+.cc-via-detail { opacity: 0.85; font-size: 0.7rem; margin-top: 2px; word-break: break-word; }
+.cc-contact-btns { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.cc-call { display: inline-flex; align-items: center; gap: 3px; background: #2ecc71; color: #fff !important; padding: 3px 12px; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 0.72rem; }
+.cc-call:hover { filter: brightness(1.08); }
+.cc-copy-btn { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.4); border-radius: 50px; padding: 3px 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+.cc-copy-btn:hover { background: rgba(255,255,255,0.3); }
 .st-badge { position: absolute; top: 11px; right: 12px; font-size: 0.64rem; font-weight: 800; padding: 4px 11px; border-radius: 50px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
 .b-find  { background: linear-gradient(135deg,#4299e1,#3182ce); }
 .b-visit { background: linear-gradient(135deg,#ed8936,#dd6b20); }
@@ -317,6 +325,17 @@ function authName() { const a = getAuth() || {}; return a.name || a.user || ''; 
 function fmtDate(s) { s = String(s == null ? '' : s).trim(); const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? (m[3]+'/'+m[2]+'/'+m[1]) : s; }
 let _toastT;
 function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(_toastT); _toastT = setTimeout(function(){ t.classList.remove('show'); }, 2800); }
+function copyToClip(t) {
+  t = String(t == null ? '' : t);
+  if (!t.trim()) { showToast('⚠️ ไม่มีข้อมูลให้คัดลอก'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function(){ showToast('📋 คัดลอกแล้ว'); }).catch(function(){ showToast('⚠️ คัดลอกไม่สำเร็จ'); });
+  } else {
+    try { const ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast('📋 คัดลอกแล้ว'); }
+    catch (e) { showToast('⚠️ คัดลอกไม่สำเร็จ'); }
+  }
+}
+function copyCardContact(id) { const c = findCust(id); if (!c) return; copyToClip(c.registrantContact || c.registrantPhone || ''); }
 function statusMeta(s) {
   switch (s) {
     case 'กำลังหา':     return { cls:'st-find',  badge:'b-find',  icon:'🔎' };
@@ -640,8 +659,12 @@ function cardHtml(c) {
   let contactLine;
   if (c.contactHidden) {
     const via = c.registrantName || c.registrant || 'ผู้ลงทะเบียน';
-    const viaC = c.registrantContact ? ' · ' + c.registrantContact : '';
-    contactLine = '<div class="cc-contact locked">ซ่อนเบอร์ — ติดต่อผ่าน ' + escapeHtml(via) + escapeHtml(viaC) + '</div>';
+    const tel = String(c.registrantPhone || '').replace(/[^\d+]/g, '');
+    let btns = '';
+    if (tel) btns += '<a class="cc-call" href="tel:' + escapeAttr(tel) + '">📞 โทร</a>';
+    if (c.registrantContact || c.registrantPhone) btns += '<button class="cc-copy-btn" onclick="copyCardContact(\'' + id + '\')">📋 คัดลอก</button>';
+    const detail = c.registrantContact ? '<div class="cc-via-detail">' + escapeHtml(c.registrantContact) + '</div>' : '';
+    contactLine = '<div class="cc-contact-block"><div class="cc-via">📇 ติดต่อผ่าน <b>' + escapeHtml(via) + '</b></div>' + detail + (btns ? '<div class="cc-contact-btns">' + btns + '</div>' : '') + '</div>';
   } else if (c.contact) {
     contactLine = '<div class="cc-contact has">' + escapeHtml(c.contact) + '</div>';
   } else { contactLine = ''; }
