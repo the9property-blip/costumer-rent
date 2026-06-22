@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Customer Database (CRM หาเช่า)",
+  "schemaVersion": 1,
+  "description": "ฐานข้อมูลลูกค้าหาเช่า — ลูกค้าที่ติดต่อเข้ามาแต่ยังไม่ได้บ้าน เก็บใน Google Sheet (แท็บ 'ลูกค้าหาเช่า') ผ่าน Google Apps Script API เดียวกับแคทตาลอกเช่า ต้องล็อกอินทีมงานก่อนจึงเห็นข้อมูล",
+  "mcpTools": [],
+  "mcpServerNames": []
+}
+</script>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ฐานข้อมูลลูกค้าหาเช่า</title>
+<style>
+:root { color-scheme: light; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: #1a202c; padding: 14px; font-size: 15px; }
+
+.header { background: linear-gradient(135deg, #1a365d, #2c7a4b); color: white; padding: 18px 20px; border-radius: 14px; margin-bottom: 14px; }
+.header h1 { font-size: 20px; margin-bottom: 4px; }
+.header .sub { opacity: 0.85; font-size: 13px; margin-bottom: 10px; }
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { background: white; color: #1a365d; border: none; padding: 9px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 700; }
+.btn:hover { background: #ebf4ff; }
+.btn-add { background: #f6c244; color: #1a365d; }
+.btn-add:hover { background: #f3b619; }
+.btn-ghost { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.45); }
+.btn-ghost:hover { background: rgba(255,255,255,0.3); }
+.btn-link { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.45); text-decoration: none; display: inline-flex; align-items: center; }
+.btn-link:hover { background: rgba(255,255,255,0.3); }
+
+/* ─── FILTER + SEARCH ─── */
+.toolbar { background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+.chip { border: 1.5px solid #cbd5e0; background: #fff; color: #4a5568; padding: 6px 13px; border-radius: 50px; font-size: 13px; cursor: pointer; font-weight: 600; font-family: inherit; }
+.chip:hover { border-color: #2c7a4b; }
+.chip.active { background: #1a365d; color: #fff; border-color: #1a365d; }
+.chip .cnt { opacity: 0.65; font-size: 11px; margin-left: 3px; }
+.search-row { display: flex; gap: 8px; }
+.search-row input { flex: 1; padding: 9px 13px; border: 1.5px solid #cbd5e0; border-radius: 9px; font-size: 14px; font-family: inherit; }
+.search-row input:focus { outline: none; border-color: #2c7a4b; }
+
+.summary-bar { background: #fff; border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; color: #4a5568; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.summary-bar b { color: #1a365d; }
+
+/* ─── CARD GRID ─── */
+.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.cust-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 1px solid #eee; border-left: 5px solid #3182ce; overflow: hidden; display: flex; flex-direction: column; }
+.cust-card.st-find  { border-left-color: #3182ce; }
+.cust-card.st-visit { border-left-color: #dd6b20; }
+.cust-card.st-wait  { border-left-color: #6b46c1; }
+.cust-card.st-done  { border-left-color: #276749; }
+.cust-card.st-cancel{ border-left-color: #a0aec0; }
+.cc-head { padding: 12px 14px 10px; background: linear-gradient(135deg, #0f3460, #16213e); color: #fff; position: relative; }
+.cc-id { font-size: 0.66rem; opacity: 0.7; letter-spacing: 1px; }
+.cc-name { font-size: 1.02rem; font-weight: 700; line-height: 1.3; padding-right: 96px; }
+.cc-contact { font-size: 0.76rem; opacity: 0.9; margin-top: 2px; }
+.cc-contact::before { content: "📞 "; }
+.st-badge { position: absolute; top: 11px; right: 12px; font-size: 0.64rem; font-weight: 800; padding: 4px 11px; border-radius: 50px; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+.b-find  { background: linear-gradient(135deg,#4299e1,#3182ce); }
+.b-visit { background: linear-gradient(135deg,#ed8936,#dd6b20); }
+.b-wait  { background: linear-gradient(135deg,#9f7aea,#6b46c1); }
+.b-done  { background: linear-gradient(135deg,#48bb78,#276749); }
+.b-cancel{ background: linear-gradient(135deg,#a0aec0,#718096); }
+.cc-body { padding: 11px 14px 4px; flex: 1; }
+.kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 0.78rem; }
+.kv { display: flex; flex-direction: column; }
+.kv .k { color: #a0aec0; font-size: 0.66rem; }
+.kv .v { color: #2d3748; font-weight: 600; word-break: break-word; }
+.kv.full { grid-column: 1 / -1; }
+.dateline { font-size: 0.7rem; color: #718096; margin-top: 8px; }
+.follow-box { margin: 9px 14px 0; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 9px; padding: 8px 10px; }
+.follow-box .ftitle { font-size: 0.68rem; color: #718096; font-weight: 700; margin-bottom: 4px; }
+.follow-item { font-size: 0.74rem; color: #2d3748; padding: 2px 0; display: flex; gap: 6px; }
+.follow-item .fn { color: #2c7a4b; font-weight: 700; flex-shrink: 0; }
+.follow-empty { font-size: 0.72rem; color: #a0aec0; }
+.note-box { margin: 8px 14px 0; font-size: 0.74rem; color: #4a5568; white-space: pre-wrap; word-break: break-word; background: #fffbeb; border: 1px solid #f6e05e; border-radius: 8px; padding: 7px 10px; }
+.note-box::before { content: "📝 "; }
+.cc-foot { display: flex; gap: 6px; padding: 10px 12px 12px; flex-wrap: wrap; }
+.cc-foot button { flex: 1 1 auto; border: none; border-radius: 8px; padding: 8px 6px; font-size: 0.74rem; font-weight: 700; cursor: pointer; font-family: inherit; min-width: 84px; }
+.fb-follow { background: #ebf8ff; color: #2c5282; border: 1.5px solid #bee3f8 !important; }
+.fb-follow:hover { background: #d9effd; }
+.fb-edit { background: #f0fff4; color: #276749; border: 1.5px solid #c6f6d5 !important; }
+.fb-edit:hover { background: #e0fbe8; }
+.fb-done { background: linear-gradient(135deg,#2c7a4b,#276749); color: #fff; }
+.fb-done:hover { filter: brightness(1.1); }
+.fb-del { background: #fff5f5; color: #c0392b; border: 1.5px solid #f3b9b3 !important; }
+.fb-del:hover { background: #fdecea; }
+
+.empty-state { text-align: center; padding: 50px 20px; color: #718096; }
+.empty-state .ic { font-size: 3rem; opacity: 0.4; }
+.loading { text-align: center; padding: 50px; color: #718096; font-size: 16px; }
+.error-box { background: #fff5f5; border: 1px solid #fc8181; color: #9b2c2c; padding: 16px; border-radius: 12px; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+
+/* ─── LOCK / LOGIN ─── */
+.lock-banner { background: #fffbeb; border: 1px solid #f6ad55; color: #744210; padding: 22px 18px; border-radius: 12px; margin-bottom: 14px; font-size: 14px; text-align: center; }
+.lock-banner .lic { font-size: 2.4rem; display: block; margin-bottom: 8px; }
+.lock-banner-btn { background: #f6c244; color: #1a365d; border: none; padding: 9px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 14px; margin-top: 10px; }
+.lock-banner-btn:hover { background: #f3b619; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: none; align-items: center; justify-content: center; z-index: 10000; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.login-box { background: #fff; border-radius: 16px; padding: 24px 22px; width: 100%; max-width: 340px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; }
+.login-box h2 { font-size: 19px; color: #1a365d; margin-bottom: 6px; }
+.login-box .login-sub { font-size: 13px; color: #718096; margin-bottom: 16px; line-height: 1.5; }
+.login-box input { width: 100%; padding: 11px 14px; font-size: 16px; border: 1.5px solid #cbd5e0; border-radius: 10px; text-align: center; letter-spacing: 2px; }
+.login-box input:focus { outline: none; border-color: #2c7a4b; }
+.login-err { color: #c0392b; font-size: 13px; min-height: 18px; margin: 9px 0; }
+.login-actions { display: flex; gap: 8px; }
+.login-actions button { flex: 1; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; }
+.login-ok { background: linear-gradient(135deg, #1a365d, #2c7a4b); color: #fff; }
+.login-ok:hover { filter: brightness(1.1); }
+.login-cancel { background: #edf2f7; color: #4a5568; }
+.login-cancel:hover { background: #e2e8f0; }
+
+/* ─── ADD / EDIT FORM MODAL ─── */
+.form-box { background: #fff; border-radius: 16px; padding: 0; width: 100%; max-width: 560px; max-height: 92vh; box-shadow: 0 20px 50px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+.form-head { background: linear-gradient(135deg, #1a365d, #2c7a4b); color: #fff; padding: 16px 20px; border-radius: 16px 16px 0 0; display: flex; justify-content: space-between; align-items: center; }
+.form-head h2 { font-size: 18px; }
+.form-head .x { background: rgba(255,255,255,0.2); color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+.form-body { padding: 18px 20px; overflow-y: auto; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 12px; color: #4a5568; font-weight: 700; margin-bottom: 4px; }
+.field label .req { color: #c0392b; }
+.field input, .field select, .field textarea { padding: 9px 11px; border: 1.5px solid #cbd5e0; border-radius: 9px; font-size: 14px; font-family: inherit; background: #fff; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: #2c7a4b; }
+.field textarea { resize: vertical; min-height: 64px; }
+.field .hint { font-size: 11px; color: #a0aec0; margin-top: 3px; }
+.form-foot { padding: 14px 20px; border-top: 1px solid #edf2f7; display: flex; gap: 10px; }
+.form-foot button { flex: 1; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; }
+.save-btn { background: linear-gradient(135deg, #1a365d, #2c7a4b); color: #fff; }
+.save-btn:hover { filter: brightness(1.1); }
+.save-btn:disabled { opacity: 0.6; cursor: default; }
+.cancel-btn { background: #edf2f7; color: #4a5568; flex: 0 0 110px; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: #1a202c; color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 10001; box-shadow: 0 6px 20px rgba(0,0,0,0.3); max-width: 90vw; text-align: center; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 480px) { .fgrid { grid-template-columns: 1fr; } .kv-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>👥 ฐานข้อมูลลูกค้าหาเช่า</h1>
+  <div class="sub" id="sub-line">ลูกค้าที่ติดต่อเข้ามาแต่ยังไม่ได้บ้าน — ติดตามจนปิดการเช่า</div>
+  <div class="header-actions">
+    <button class="btn" onclick="loadData()">🔄 โหลดข้อมูล</button>
+    <button class="btn btn-add" id="addBtn" onclick="openAdd()">➕ เพิ่มลูกค้าใหม่</button>
+    <a class="btn-link" id="catalogLink" href="#" target="_blank" rel="noopener" style="display:none">🏠 แคทตาลอกเช่า</a>
+    <button class="btn btn-ghost" id="authBtn" onclick="authBtnClick()">🔒 ล็อกอินทีมงาน</button>
+  </div>
+</div>
+
+<div id="lockBanner" class="lock-banner" style="display:none">
+  <span class="lic">🔒</span>
+  ข้อมูลลูกค้าเป็นความลับ — กรุณาล็อกอินทีมงานก่อนจึงจะเห็นรายชื่อลูกค้า
+  <br><button class="lock-banner-btn" onclick="openLogin()">เข้าสู่ระบบทีมงาน</button>
+</div>
+
+<div id="toolbar" class="toolbar" style="display:none">
+  <div class="chips" id="chips"></div>
+  <div class="search-row">
+    <input id="searchInput" type="text" placeholder="🔍 ค้นหา ชื่อ / เบอร์ / สัญชาติ / ทำเล / หมายเหตุ..." oninput="render()">
+  </div>
+</div>
+
+<div id="summary-bar" class="summary-bar" style="display:none"></div>
+<div id="output"></div>
+
+<!-- LOGIN MODAL -->
+<div class="modal-overlay" id="loginModal">
+  <div class="login-box">
+    <h2>🔐 ล็อกอินทีมงาน</h2>
+    <div class="login-sub">ใส่รหัสทีมงานเพื่อเข้าดู / จัดการฐานข้อมูลลูกค้า</div>
+    <input id="loginPw" type="password" placeholder="รหัสทีมงาน" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-actions">
+      <button class="login-ok" id="loginOkBtn" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <button class="login-cancel" onclick="closeLogin()">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT FORM MODAL -->
+<div class="modal-overlay" id="formModal">
+  <div class="form-box">
+    <div class="form-head">
+      <h2 id="formTitle">➕ เพิ่มลูกค้าใหม่</h2>
+      <button class="x" onclick="closeForm()">×</button>
+    </div>
+    <div class="form-body">
+      <input type="hidden" id="f_id">
+      <div class="fgrid">
+        <div class="field"><label>ชื่อลูกค้า <span class="req">*</span></label><input id="f_name" type="text" placeholder="ชื่อ / ชื่อเล่น"></div>
+        <div class="field"><label>ช่องทางติดต่อ</label><input id="f_contact" type="text" placeholder="เบอร์ / LINE / FB"></div>
+        <div class="field"><label>วันที่รับลูกค้า</label><input id="f_dateIn" type="text" placeholder="dd/mm/yyyy"><div class="hint">เว้นว่าง = วันนี้</div></div>
+        <div class="field"><label>สัญชาติ</label><input id="f_nationality" type="text" placeholder="เช่น ไทย / จีน / อังกฤษ"></div>
+        <div class="field"><label>งบประมาณ (บาท/เดือน)</label><input id="f_budget" type="text" placeholder="เช่น 15,000 - 20,000"></div>
+        <div class="field"><label>ประเภททรัพย์ที่ต้องการ</label>
+          <select id="f_propType"><option value=""></option><option>บ้านเดี่ยว</option><option>บ้านแฝด</option><option>ทาวน์โฮม / ทาวน์เฮ้าส์</option><option>คอนโด</option><option>พูลวิลล่า</option><option>อื่นๆ</option></select>
+        </div>
+        <div class="field full"><label>ทำเล / ใกล้</label><input id="f_area" type="text" placeholder="เช่น ใกล้ Central, นิมมาน, รร.นานาชาติ"></div>
+        <div class="field"><label>ห้องนอนที่ต้องการ</label><input id="f_bedroom" type="text" placeholder="เช่น 2-3"></div>
+        <div class="field"><label>ห้องน้ำที่ต้องการ</label><input id="f_bathroom" type="text" placeholder="เช่น 1-2"></div>
+        <div class="field"><label>สัตว์เลี้ยง</label>
+          <select id="f_pet"><option value=""></option><option>ไม่มี</option><option>มี - สุนัข</option><option>มี - แมว</option><option>มี - อื่นๆ</option></select>
+        </div>
+        <div class="field"><label>จำนวนผู้อาศัย</label><input id="f_occupants" type="text" placeholder="เช่น 2 คน"></div>
+        <div class="field"><label>วันที่อยากเข้าอยู่</label><input id="f_moveIn" type="text" placeholder="เช่น 01/08/2026 หรือ ต้น ส.ค."></div>
+        <div class="field"><label>สถานะ</label><select id="f_status"></select></div>
+        <div class="field"><label>ผู้ดูแล</label><input id="f_staff" type="text" placeholder="ชื่อทีมงาน"></div>
+        <div class="field full" id="followFields" style="display:none">
+          <label>การติดตาม (แก้ไขได้)</label>
+          <input id="f_follow1" type="text" placeholder="ติดตามครั้งที่ 1" style="margin-bottom:6px">
+          <input id="f_follow2" type="text" placeholder="ติดตามครั้งที่ 2" style="margin-bottom:6px">
+          <input id="f_follow3" type="text" placeholder="ติดตามครั้งที่ 3">
+        </div>
+        <div class="field full"><label>หมายเหตุ</label><textarea id="f_note" placeholder="รายละเอียดเพิ่มเติม..."></textarea></div>
+      </div>
+    </div>
+    <div class="form-foot">
+      <button class="cancel-btn" onclick="closeForm()">ยกเลิก</button>
+      <button class="save-btn" id="saveBtn" onclick="submitForm()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  ใช้ Apps Script deployment เดียวกับ "แคทตาลอกเช่า" (AKfycbxu4qqx…)
+//  redeploy ตัวนี้ครั้งเดียว → ได้ทั้งแคทตาลอก, ตารางโพส, และหน้าลูกค้านี้
+// ═══════════════════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxu4qqxY58PGGIRBIfLWkCwj9TMIUdCB3DWg7xT2setU60hQsjDwisCplNVpka9UW-zFg/exec';
+const STAFF_TOKEN_KEY = 'cust_staff_token';
+// ★ ใส่ URL หน้าแคทตาลอกเช่า (GitHub Pages) เพื่อโชว์ปุ่มลิงก์กลับ — เว้น '' ถ้ายังไม่มี
+const CATALOG_URL = '';
+
+let STATUSES = ['กำลังหา', 'นัดชมทรัพย์', 'รอตัดสินใจ', 'ได้บ้านแล้ว', 'ยกเลิก'];
+let DONE_STATUSES = ['ได้บ้านแล้ว', 'ยกเลิก'];
+let customers = [];          // ข้อมูลลูกค้าทั้งหมดจากชีต
+let activeFilter = 'pending';// ฟิลเตอร์เริ่มต้น = ลูกค้าที่ยังไม่ได้บ้าน
+
+// ─── helpers ───────────────────────────────────────────────
+function escapeHtml(s) {
+  s = (s == null) ? '' : String(s);
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+function todayShort() {
+  const d = new Date(), p = function(n) { return String(n).padStart(2, '0'); };
+  return p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+}
+let _toastT;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+function statusMeta(s) {
+  switch (s) {
+    case 'กำลังหา':     return { cls: 'st-find',  badge: 'b-find',  icon: '🔎' };
+    case 'นัดชมทรัพย์': return { cls: 'st-visit', badge: 'b-visit', icon: '📅' };
+    case 'รอตัดสินใจ':  return { cls: 'st-wait',  badge: 'b-wait',  icon: '⏳' };
+    case 'ได้บ้านแล้ว':  return { cls: 'st-done',  badge: 'b-done',  icon: '✅' };
+    case 'ยกเลิก':      return { cls: 'st-cancel',badge: 'b-cancel',icon: '✖️' };
+    default:           return { cls: 'st-find',  badge: 'b-find',  icon: '•' };
+  }
+}
+function isDone(s) { return DONE_STATUSES.indexOf(s) >= 0; }
+
+// ─── API (ทุก action ใช้ GET + token + _t กัน cache ของ Google) ───
+function apiUrl(action, paramsObj) {
+  const token = getStaffToken();
+  let url = SCRIPT_URL + '?action=' + encodeURIComponent(action) + '&token=' + encodeURIComponent(token);
+  if (paramsObj) {
+    Object.keys(paramsObj).forEach(function(k) {
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(paramsObj[k] == null ? '' : paramsObj[k]);
+    });
+  }
+  url += '&_t=' + Date.now();
+  return url;
+}
+async function api(action, paramsObj) {
+  const resp = await fetch(apiUrl(action, paramsObj));
+  const json = await resp.json();
+  if (json && json.msg === 'unauthorized') {
+    setStaffToken(''); updateAuthUI();
+    showToast('🔒 เซสชันหมดอายุ — ล็อกอินใหม่'); openLogin();
+    throw new Error('unauthorized');
+  }
+  return json;
+}
+
+// ─── LOAD ─────────────────────────────────────────────────
+async function loadData() {
+  if (!isLoggedIn()) { openLogin(); return; }
+  const output = document.getElementById('output');
+  document.getElementById('summary-bar').style.display = 'none';
+  output.innerHTML = '<div class="loading">⏳ กำลังดึงข้อมูลลูกค้าจาก Google Sheet...</div>';
+  try {
+    const json = await api('custList');
+    if (!json || !json.ok) throw new Error((json && json.msg) || 'โหลดไม่สำเร็จ');
+    customers = json.data || [];
+    if (json.statuses && json.statuses.length) STATUSES = json.statuses;
+    if (json.doneStatuses && json.doneStatuses.length) DONE_STATUSES = json.doneStatuses;
+    document.getElementById('toolbar').style.display = '';
+    buildChips();
+    render();
+  } catch (err) {
+    if (err.message === 'unauthorized') return;
+    output.innerHTML = '<div class="error-box">❌ ' + escapeHtml(err.message) + '</div>';
+    console.error(err);
+  }
+}
+
+// ─── FILTER CHIPS ─────────────────────────────────────────
+function countFor(filter) {
+  return customers.filter(function(c) { return matchFilter(c, filter); }).length;
+}
+function matchFilter(c, filter) {
+  if (filter === 'all') return true;
+  if (filter === 'pending') return !isDone(c.status);
+  return c.status === filter;
+}
+function buildChips() {
+  const defs = [{ key: 'pending', label: '⏳ ยังไม่ได้บ้าน' }];
+  STATUSES.forEach(function(s) { defs.push({ key: s, label: statusMeta(s).icon + ' ' + s }); });
+  defs.push({ key: 'all', label: '📋 ทั้งหมด' });
+  document.getElementById('chips').innerHTML = defs.map(function(d) {
+    const active = (d.key === activeFilter) ? ' active' : '';
+    return '<button class="chip' + active + '" onclick="setFilter(\'' + escapeAttr(d.key) + '\')">' +
+      escapeHtml(d.label) + '<span class="cnt">' + countFor(d.key) + '</span></button>';
+  }).join('');
+}
+function setFilter(f) { activeFilter = f; buildChips(); render(); }
+
+// ─── RENDER ───────────────────────────────────────────────
+function render() {
+  if (!isLoggedIn()) return;
+  const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  let list = customers.filter(function(c) { return matchFilter(c, activeFilter); });
+  if (q) {
+    list = list.filter(function(c) {
+      return [c.name, c.contact, c.nationality, c.area, c.note, c.id, c.propType, c.budget]
+        .join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  // เรียง: ยังไม่ปิดเคสก่อน, ใหม่สุด (รหัสมากสุด) ขึ้นก่อน
+  list.sort(function(a, b) {
+    const da = isDone(a.status) ? 1 : 0, db = isDone(b.status) ? 1 : 0;
+    if (da !== db) return da - db;
+    return (b.id || '').localeCompare(a.id || '', undefined, { numeric: true });
+  });
+
+  buildChips();
+  const sb = document.getElementById('summary-bar');
+  const pending = countFor('pending');
+  sb.innerHTML = '👥 ลูกค้าทั้งหมด: <b>' + customers.length + '</b> &nbsp;|&nbsp; ' +
+    '⏳ ยังไม่ได้บ้าน: <b>' + pending + '</b> &nbsp;|&nbsp; ' +
+    '✅ ได้บ้านแล้ว: <b>' + countFor('ได้บ้านแล้ว') + '</b> &nbsp;|&nbsp; ' +
+    'แสดง: <b>' + list.length + '</b> รายการ';
+  sb.style.display = 'flex';
+
+  const output = document.getElementById('output');
+  if (!list.length) {
+    output.innerHTML = '<div class="empty-state"><div class="ic">📭</div><p>ยังไม่มีลูกค้าในกลุ่มนี้</p>' +
+      '<button class="lock-banner-btn" onclick="openAdd()">➕ เพิ่มลูกค้าใหม่</button></div>';
+    return;
+  }
+  output.innerHTML = '<div class="card-grid">' + list.map(cardHtml).join('') + '</div>';
+}
+
+function kv(k, v) {
+  if (!v) return '';
+  return '<div class="kv"><span class="k">' + escapeHtml(k) + '</span><span class="v">' + escapeHtml(v) + '</span></div>';
+}
+function cardHtml(c) {
+  const m = statusMeta(c.status);
+  const id = escapeAttr(c.id);
+
+  let kvs = '';
+  kvs += kv('สัญชาติ', c.nationality);
+  kvs += kv('งบประมาณ', c.budget);
+  kvs += kv('ประเภท', c.propType);
+  kvs += kv('ห้องนอน', c.bedroom);
+  kvs += kv('ห้องน้ำ', c.bathroom);
+  kvs += kv('สัตว์เลี้ยง', c.pet);
+  kvs += kv('ผู้อาศัย', c.occupants);
+  kvs += kv('เข้าอยู่', c.moveIn);
+  kvs += kv('ผู้ดูแล', c.staff);
+  if (c.area) kvs += '<div class="kv full"><span class="k">ทำเล / ใกล้</span><span class="v">' + escapeHtml(c.area) + '</span></div>';
+
+  const follows = [c.follow1, c.follow2, c.follow3];
+  const hasFollow = follows.some(function(f) { return f; });
+  let followHtml = '<div class="follow-box"><div class="ftitle">📌 การติดตาม</div>';
+  if (hasFollow) {
+    follows.forEach(function(f, i) {
+      if (f) followHtml += '<div class="follow-item"><span class="fn">#' + (i + 1) + '</span><span>' + escapeHtml(f) + '</span></div>';
+    });
+  } else {
+    followHtml += '<div class="follow-empty">— ยังไม่มีการติดตาม —</div>';
+  }
+  followHtml += '</div>';
+
+  const noteHtml = c.note ? '<div class="note-box">' + escapeHtml(c.note) + '</div>' : '';
+
+  const doneBtn = isDone(c.status)
+    ? '<button class="fb-edit" onclick="setStatus(\'' + id + '\',\'กำลังหา\')" title="กลับมาเป็นกำลังหา">↩️ เปิดเคสใหม่</button>'
+    : '<button class="fb-done" onclick="setStatus(\'' + id + '\',\'ได้บ้านแล้ว\')" title="ปิดเคส: ลูกค้าได้บ้านแล้ว">✅ ได้บ้านแล้ว</button>';
+
+  return '<div class="cust-card ' + m.cls + '" data-id="' + id + '">' +
+    '<div class="cc-head">' +
+      '<span class="st-badge ' + m.badge + '">' + m.icon + ' ' + escapeHtml(c.status || 'กำลังหา') + '</span>' +
+      '<div class="cc-id">' + escapeHtml(c.id) + ' · รับ ' + escapeHtml(c.dateIn || '-') + '</div>' +
+      '<div class="cc-name">' + escapeHtml(c.name || '(ไม่ระบุชื่อ)') + '</div>' +
+      (c.contact ? '<div class="cc-contact">' + escapeHtml(c.contact) + '</div>' : '') +
+    '</div>' +
+    '<div class="cc-body"><div class="kv-grid">' + kvs + '</div></div>' +
+    followHtml + noteHtml +
+    '<div class="cc-foot">' +
+      '<button class="fb-follow" onclick="quickFollow(\'' + id + '\')" title="บันทึกการติดตามครั้งใหม่">📞 +ติดตาม</button>' +
+      '<button class="fb-edit" onclick="openEdit(\'' + id + '\')">✏️ แก้ไข</button>' +
+      doneBtn +
+      '<button class="fb-del" onclick="delCustomer(\'' + id + '\')">🗑️ ลบ</button>' +
+    '</div>' +
+  '</div>';
+}
+
+// ─── QUICK ACTIONS ────────────────────────────────────────
+function findCust(id) {
+  id = String(id).toUpperCase();
+  return customers.find(function(c) { return String(c.id).toUpperCase() === id; });
+}
+
+// +ติดตาม: ใส่บันทึกลงช่องติดตามว่างช่องถัดไป (1→2→3) พร้อมวันที่วันนี้; ถ้าครบ 3 ช่อง → ต่อท้ายหมายเหตุ
+async function quickFollow(id) {
+  const c = findCust(id);
+  if (!c) return;
+  const note = prompt('บันทึกการติดตาม ' + (c.name || id) + ' (วันที่วันนี้จะถูกใส่ให้อัตโนมัติ):', '');
+  if (note == null) return;
+  const txt = (note || '').trim();
+  if (!txt) return;
+  const entry = todayShort() + ' - ' + txt;
+  let field, val;
+  if (!c.follow1)      { field = 'follow1'; val = entry; }
+  else if (!c.follow2) { field = 'follow2'; val = entry; }
+  else if (!c.follow3) { field = 'follow3'; val = entry; }
+  else { field = 'note'; val = (c.note ? c.note + '\n' : '') + '[ติดตามเพิ่ม] ' + entry; }
+
+  const params = { id: id }; params[field] = val;
+  try {
+    const j = await api('custUpdate', params);
+    if (j && j.ok) {
+      c[field] = val;
+      render();
+      showToast('📞 บันทึกการติดตามแล้ว');
+    } else { showToast('⚠️ บันทึกไม่สำเร็จ: ' + ((j && j.msg) || '')); }
+  } catch (e) { if (e.message !== 'unauthorized') showToast('⚠️ ' + e.message); }
+}
+
+async function setStatus(id, status) {
+  const c = findCust(id);
+  if (!c) return;
+  if (status === 'ได้บ้านแล้ว' && !confirm('ยืนยันปิดเคส: ' + (c.name || id) + ' ได้บ้านแล้ว?')) return;
+  try {
+    const j = await api('custUpdate', { id: id, status: status });
+    if (j && j.ok) {
+      c.status = status;
+      render();
+      showToast(statusMeta(status).icon + ' เปลี่ยนสถานะเป็น "' + status + '" แล้ว');
+    } else { showToast('⚠️ ไม่สำเร็จ: ' + ((j && j.msg) || '')); }
+  } catch (e) { if (e.message !== 'unauthorized') showToast('⚠️ ' + e.message); }
+}
+
+async function delCustomer(id) {
+  const c = findCust(id);
+  if (!c) return;
+  if (!confirm('ลบลูกค้า ' + (c.name || id) + ' (' + id + ') ออกจากฐานข้อมูล?\nลบแล้วกู้คืนไม่ได้')) return;
+  try {
+    const j = await api('custDelete', { id: id });
+    if (j && j.ok) {
+      customers = customers.filter(function(x) { return x.id !== c.id; });
+      render();
+      showToast('🗑️ ลบ ' + id + ' แล้ว');
+    } else { showToast('⚠️ ลบไม่สำเร็จ: ' + ((j && j.msg) || '')); }
+  } catch (e) { if (e.message !== 'unauthorized') showToast('⚠️ ' + e.message); }
+}
+
+// ─── ADD / EDIT FORM ──────────────────────────────────────
+const FORM_FIELDS = ['name', 'contact', 'dateIn', 'nationality', 'budget', 'propType', 'area',
+  'bedroom', 'bathroom', 'pet', 'occupants', 'moveIn', 'status', 'staff', 'follow1', 'follow2', 'follow3', 'note'];
+function fillStatusSelect(sel) {
+  sel.innerHTML = STATUSES.map(function(s) { return '<option>' + escapeHtml(s) + '</option>'; }).join('');
+}
+function openAdd() {
+  if (!isLoggedIn()) { openLogin(); return; }
+  document.getElementById('formTitle').textContent = '➕ เพิ่มลูกค้าใหม่';
+  document.getElementById('f_id').value = '';
+  fillStatusSelect(document.getElementById('f_status'));
+  FORM_FIELDS.forEach(function(k) { const el = document.getElementById('f_' + k); if (el) el.value = ''; });
+  document.getElementById('f_status').value = 'กำลังหา';
+  document.getElementById('followFields').style.display = 'none';   // ตอนเพิ่ม ใช้ปุ่ม +ติดตาม ทีหลัง
+  document.getElementById('formModal').classList.add('open');
+  setTimeout(function() { document.getElementById('f_name').focus(); }, 50);
+}
+function openEdit(id) {
+  const c = findCust(id);
+  if (!c) return;
+  document.getElementById('formTitle').textContent = '✏️ แก้ไข ' + c.id + ' — ' + (c.name || '');
+  document.getElementById('f_id').value = c.id;
+  fillStatusSelect(document.getElementById('f_status'));
+  FORM_FIELDS.forEach(function(k) { const el = document.getElementById('f_' + k); if (el) el.value = c[k] || ''; });
+  document.getElementById('followFields').style.display = '';       // แก้ไขช่องติดตามได้
+  document.getElementById('formModal').classList.add('open');
+  setTimeout(function() { document.getElementById('f_name').focus(); }, 50);
+}
+function closeForm() { document.getElementById('formModal').classList.remove('open'); }
+
+async function submitForm() {
+  const id = document.getElementById('f_id').value;
+  const data = {};
+  FORM_FIELDS.forEach(function(k) { const el = document.getElementById('f_' + k); if (el) data[k] = el.value.trim(); });
+  if (!data.name) { showToast('⚠️ กรุณาใส่ชื่อลูกค้า'); document.getElementById('f_name').focus(); return; }
+
+  const saveBtn = document.getElementById('saveBtn');
+  saveBtn.disabled = true; saveBtn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    if (id) {
+      const j = await api('custUpdate', Object.assign({ id: id }, data));
+      if (j && j.ok) {
+        const c = findCust(id);
+        if (c) FORM_FIELDS.forEach(function(k) { c[k] = data[k]; });
+        closeForm(); render(); showToast('💾 บันทึกการแก้ไขแล้ว');
+      } else { showToast('⚠️ ไม่สำเร็จ: ' + ((j && j.msg) || '')); }
+    } else {
+      const j = await api('custAdd', data);
+      if (j && j.ok) {
+        closeForm();
+        showToast('✅ เพิ่มลูกค้า ' + j.id + ' แล้ว');
+        await loadData();
+      } else { showToast('⚠️ เพิ่มไม่สำเร็จ: ' + ((j && j.msg) || '')); }
+    }
+  } catch (e) {
+    if (e.message !== 'unauthorized') showToast('⚠️ ' + e.message);
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึก';
+  }
+}
+
+// ─── LOGIN (เหมือนหน้าตารางโพส: ตรวจรหัสกับ ?action=caption&token=) ───
+function getStaffToken() { try { return sessionStorage.getItem(STAFF_TOKEN_KEY) || ''; } catch (e) { return ''; } }
+function setStaffToken(t) { try { if (t) sessionStorage.setItem(STAFF_TOKEN_KEY, t); else sessionStorage.removeItem(STAFF_TOKEN_KEY); } catch (e) {} }
+function isLoggedIn() { return !!getStaffToken(); }
+
+function updateAuthUI() {
+  const inn = isLoggedIn();
+  const btn = document.getElementById('authBtn');
+  if (btn) btn.textContent = inn ? '⭐ ทีมงาน (ออก)' : '🔒 ล็อกอินทีมงาน';
+  document.getElementById('lockBanner').style.display = inn ? 'none' : '';
+  document.getElementById('addBtn').style.display = inn ? '' : 'none';
+  if (!inn) {
+    document.getElementById('toolbar').style.display = 'none';
+    document.getElementById('summary-bar').style.display = 'none';
+    document.getElementById('output').innerHTML = '';
+  }
+  const cl = document.getElementById('catalogLink');
+  if (cl && CATALOG_URL) { cl.href = CATALOG_URL; cl.style.display = ''; }
+}
+function authBtnClick() { if (isLoggedIn()) { if (confirm('ออกจากระบบทีมงาน?')) logout(); } else openLogin(); }
+function logout() { setStaffToken(''); customers = []; updateAuthUI(); showToast('👋 ออกจากระบบแล้ว'); }
+
+function openLogin() {
+  const mdl = document.getElementById('loginModal');
+  document.getElementById('loginErr').textContent = '';
+  document.getElementById('loginPw').value = '';
+  mdl.classList.add('open');
+  setTimeout(function() { document.getElementById('loginPw').focus(); }, 50);
+}
+function closeLogin() { document.getElementById('loginModal').classList.remove('open'); }
+
+async function doLogin() {
+  const inp = document.getElementById('loginPw');
+  const errEl = document.getElementById('loginErr');
+  const okBtn = document.getElementById('loginOkBtn');
+  const pw = (inp.value || '').trim();
+  if (!pw) { errEl.textContent = 'กรุณาใส่รหัส'; return; }
+  errEl.textContent = '⏳ กำลังตรวจสอบ...';
+  okBtn.disabled = true;
+  try {
+    const j = await (await fetch(SCRIPT_URL + '?action=caption&token=' + encodeURIComponent(pw) + '&_t=' + Date.now())).json();
+    if (j && j.msg === 'unauthorized') {
+      errEl.textContent = '❌ รหัสไม่ถูกต้อง';
+    } else {
+      setStaffToken(pw);
+      updateAuthUI();
+      closeLogin();
+      showToast('✅ เข้าสู่ระบบสำเร็จ');
+      loadData();
+    }
+  } catch (e) {
+    errEl.textContent = '⚠️ เชื่อมต่อไม่ได้: ' + e.message;
+  } finally {
+    okBtn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeLogin(); closeForm(); } });
+
+function init() {
+  updateAuthUI();
+  if (isLoggedIn()) loadData();
+  else openLogin();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+</script>
+</body>
+</html>
