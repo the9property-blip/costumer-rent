@@ -206,7 +206,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 .cal-day.sel { outline: 2px solid #2c7a4b; }
 .cal-dots { display: flex; gap: 2px; margin-top: 2px; height: 5px; }
 .cal-dots i { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
-.d-due { background: #e53e3e; } .d-exp { background: #dd6b20; } .d-renew { background: #d69e2e; }
+.d-due { background: #16a34a; } .d-exp { background: #dd6b20; } .d-renew { background: #d69e2e; }
 .cal-legend { display: flex; gap: 11px; margin-top: 8px; font-size: 10.5px; color: #718096; flex-wrap: wrap; }
 .cal-legend i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 3px; }
 
@@ -215,16 +215,18 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 .rm-head b { font-size: 14px; color: #1a365d; }
 .rm-clear { font-size: 11px; color: #2c7a4b; cursor: pointer; font-weight: 700; }
 .rm-list { display: flex; flex-direction: column; gap: 7px; max-height: 64vh; overflow-y: auto; }
-.rm { display: flex; gap: 8px; align-items: center; background: #f8fafc; border: 1px solid #eef2f7; border-left: 3px solid #e53e3e; border-radius: 8px; padding: 7px 8px; cursor: pointer; }
+.rm { display: flex; gap: 8px; align-items: center; background: #f8fafc; border: 1px solid #eef2f7; border-left: 3px solid #16a34a; border-radius: 8px; padding: 7px 8px; cursor: pointer; }
 .rm:hover { background: #eef4fb; }
 .rm.r-exp { border-left-color: #dd6b20; } .rm.r-renew { border-left-color: #d69e2e; }
+.rm-paid { flex-shrink: 0; background: #16a34a; color: #fff; border: none; border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.rm-paid:hover { filter: brightness(1.08); }
 .rm-ph { width: 42px; height: 42px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #e2e8f0; }
 .rm-ph img { width: 100%; height: 100%; object-fit: cover; }
 .noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #b0bec5; }
 .rm-bd { flex: 1; min-width: 0; }
 .rm-t { font-size: 13px; font-weight: 800; color: #1a365d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rm-r { font-size: 11.5px; font-weight: 700; margin-top: 2px; }
-.rm-r.due { color: #e53e3e; } .rm-r.exp { color: #dd6b20; } .rm-r.renew { color: #b7791f; }
+.rm-r.due { color: #15803d; } .rm-r.exp { color: #dd6b20; } .rm-r.renew { color: #b7791f; }
 .rm-empty { font-size: 12px; color: #a0aec0; text-align: center; padding: 16px 0; }
 
 /* contract detail + form modal (reuse overlay) */
@@ -234,7 +236,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 .ct-dt-kv .k { font-size: 10.5px; color: #a0aec0; } .ct-dt-kv .v { font-size: 13.5px; font-weight: 700; color: #2d3748; word-break: break-word; }
 .ct-dt-kv.full { grid-column: 1 / -1; }
 .ct-dt-alert { padding: 9px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 700; margin-bottom: 12px; }
-.ct-dt-alert.due { background: #fff5f5; color: #c0392b; } .ct-dt-alert.exp { background: #fffaf0; color: #c05621; } .ct-dt-alert.renew { background: #fffff0; color: #975a16; }
+.ct-dt-alert.due { background: #f0fdf4; color: #15803d; } .ct-dt-alert.exp { background: #fffaf0; color: #c05621; } .ct-dt-alert.renew { background: #fffff0; color: #975a16; }
 .ct-fg { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ct-fd { display: flex; flex-direction: column; }
 .ct-fd.full { grid-column: 1 / -1; }
@@ -517,7 +519,8 @@ const T = {
     cd_permonth:' /เดือน', cd_day_word:'วันที่ ',
     cd_close:'ปิด', cd_file:'📄 ไฟล์', cd_edit:'✏️ แก้ไข', cd_del:'🗑️ ลบ',
     ct_form_add:'📑 เพิ่มสัญญา', ct_form_edit:'✏️ แก้ไขสัญญา',
-    ct_need_code:'⚠️ ใส่รหัสหรือชื่อโครงการ', ct_saved:'💾 บันทึกแล้ว', ct_deleted:'🗑️ ลบแล้ว', ct_edit_only:'🔒 แก้ได้เฉพาะของคุณเอง', ct_del_confirm:'ลบสัญญา'
+    ct_need_code:'⚠️ ใส่รหัสหรือชื่อโครงการ', ct_saved:'💾 บันทึกแล้ว', ct_deleted:'🗑️ ลบแล้ว', ct_edit_only:'🔒 แก้ได้เฉพาะของคุณเอง', ct_del_confirm:'ลบสัญญา',
+    ct_paid_btn:'✓ ชำระแล้ว', ct_paid_ok:'✅ บันทึกการชำระค่าเช่าแล้ว', rd_overdue:'⏰ เลยกำหนด'
   },
   en: {
     app_title:'👥 Rental Customer Database', app_sub:'Customers who contacted but haven’t rented yet — follow up to close',
@@ -568,7 +571,8 @@ const T = {
     cd_permonth:' /mo', cd_day_word:'day ',
     cd_close:'Close', cd_file:'📄 File', cd_edit:'✏️ Edit', cd_del:'🗑️ Delete',
     ct_form_add:'📑 Add Contract', ct_form_edit:'✏️ Edit Contract',
-    ct_need_code:'⚠️ Enter a code or project name', ct_saved:'💾 Saved', ct_deleted:'🗑️ Deleted', ct_edit_only:'🔒 You can only edit your own', ct_del_confirm:'Delete contract'
+    ct_need_code:'⚠️ Enter a code or project name', ct_saved:'💾 Saved', ct_deleted:'🗑️ Deleted', ct_edit_only:'🔒 You can only edit your own', ct_del_confirm:'Delete contract',
+    ct_paid_btn:'✓ Paid', ct_paid_ok:'✅ Rent payment recorded', rd_overdue:'⏰ Overdue'
   }
 };
 function getLang() { try { return localStorage.getItem(LANG_KEY) || 'th'; } catch (e) { return 'th'; } }
@@ -1172,11 +1176,20 @@ async function loadContracts(){
 }
 
 // ── CALENDAR ──
+function _isoToDate(s){ const m = String(s || '').split('-'); return (m.length === 3) ? new Date(+m[0], +m[1]-1, +m[2]) : null; }
 function eventsOfMonth(){
   const ev = {};
   function add(day, kind, c){ if (!ev[day]) ev[day] = { due:[], exp:[], renew:[] }; ev[day][kind].push(c); }
   contracts.forEach(function(c){
-    if (c.payDay && !c.ended && !c.inactive) add(c.payDay, 'due', c);
+    if (c.payDay && !c.inactive) {
+      const day = Math.min(c.payDay, new Date(calY, calM + 1, 0).getDate());   // กันวันจ่าย 31 ในเดือนสั้น
+      const pd = new Date(calY, calM, day);
+      const endD = _isoToDate(c.endISO);
+      const paidD = _isoToDate(c.paidThruISO);
+      const afterEnd = endD && pd >= endD;      // #2 ตั้งแต่วันหมดสัญญา ไม่เตือนเก็บค่าเช่า
+      const settled  = paidD && pd <= paidD;     // #3 จ่ายรอบนี้แล้ว → ไม่ขึ้นจุด
+      if (!afterEnd && !settled) add(day, 'due', c);
+    }
     if (c.endISO){ const m = c.endISO.split('-'); if (+m[0] === calY && +m[1]-1 === calM) add(+m[2], 'exp', c); }
     if (c.renewISO){ const m = c.renewISO.split('-'); if (+m[0] === calY && +m[1]-1 === calM) add(+m[2], 'renew', c); }
   });
@@ -1224,7 +1237,11 @@ function renderReminders(){
     document.getElementById('rmTitle').textContent = t('rm_title');
     clr.style.display = 'none';
     contracts.forEach(function(c){
-      if (c.dueToday) items.push({ c:c, kind:'due', reason: t('rd_due_today') + ' ฿' + money(c.rent), sort:0 });
+      if (c.dueToday) {
+        const od = c.daysOverdue || 0;
+        const head = od > 0 ? (t('rd_overdue') + ' ' + od + ' ' + t('ct_unit_days')) : t('rd_due_today');
+        items.push({ c:c, kind:'due', reason: head + ' ฿' + money(c.rent), sort: od > 0 ? -od : 0 });   // เลยกำหนดมาก = ขึ้นบนสุด
+      }
       else if (c.expiring) items.push({ c:c, kind:'exp', reason: '⏳ ' + ctDaysLabel(c), sort: 1 + (c.daysToEnd || 0) });
       else if (c.renewDue) items.push({ c:c, kind:'renew', reason: t('rd_renew_in') + ' ' + c.daysToRenew + ' ' + t('ct_unit_days'), sort: 100 + (c.daysToRenew || 0) });
     });
@@ -1234,9 +1251,12 @@ function renderReminders(){
   list.innerHTML = items.map(function(it){
     const c = it.c;
     const ph = c.thumb ? '<img src="' + photoUrl(c.thumb, 120) + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=&quot;noimg&quot;>🏠</div>\'">' : '<div class="noimg">🏠</div>';
+    const paidBtn = (c.dueToday && c.canEdit)   // #3 ปุ่มชำระแล้ว — เฉพาะรายการค่าเช่าที่ถึงกำหนด
+      ? '<button class="rm-paid" onclick="event.stopPropagation();markContractPaid(' + c.row + ')">' + t('ct_paid_btn') + '</button>' : '';
     return '<div class="rm r-' + it.kind + '" onclick="openContractDetail(' + c.row + ')">' +
       '<div class="rm-ph">' + ph + '</div>' +
-      '<div class="rm-bd"><div class="rm-t">' + escapeHtml(c.project || c.code || '-') + '</div><div class="rm-r ' + it.kind + '">' + it.reason + '</div></div></div>';
+      '<div class="rm-bd"><div class="rm-t">' + escapeHtml(c.project || c.code || '-') + '</div><div class="rm-r ' + it.kind + '">' + it.reason + '</div></div>' +
+      paidBtn + '</div>';
   }).join('');
 }
 
@@ -1253,7 +1273,7 @@ function openContractDetail(row){
   const c = findContractRow(row); if (!c) return;
   document.getElementById('ctDtTitle').textContent = (c.project || c.code || t('cd_title'));
   let alert = '';
-  if (c.dueToday) alert = '<div class="ct-dt-alert due">' + t('cd_due') + ' — ฿' + money(c.rent) + '</div>';
+  if (c.dueToday) { const od = c.daysOverdue || 0; const head = od > 0 ? (t('rd_overdue') + ' ' + od + ' ' + t('ct_unit_days')) : t('cd_due'); alert = '<div class="ct-dt-alert due">' + head + ' — ฿' + money(c.rent) + '</div>'; }
   else if (c.expiring) alert = '<div class="ct-dt-alert exp">⏳ ' + ctDaysLabel(c) + ' (' + ctDate(c.endISO) + ')</div>';
   else if (c.renewDue) alert = '<div class="ct-dt-alert renew">' + t('cd_renew_msg') + ' (' + ctDate(c.renewISO) + ')</div>';
   const ph = c.thumb ? '<div class="ct-detail-photo"><img src="' + photoUrl(c.thumb, 500) + '" onerror="this.parentNode.style.display=\'none\'"></div>' : '';
@@ -1270,6 +1290,7 @@ function openContractDetail(row){
   '</div>';
   const foot = document.getElementById('ctDtFoot');
   let fb = '<button class="cancel-btn" style="flex:1" onclick="closeContractDetail()">' + t('cd_close') + '</button>';
+  if (c.dueToday && c.canEdit) fb += '<button class="save-btn" style="background:#16a34a" onclick="closeContractDetail();markContractPaid(' + c.row + ')">' + t('ct_paid_btn') + '</button>';
   if (c.contractFile) fb += '<button class="save-btn" onclick="window.open(\'' + escapeAttr(c.contractFile) + '\',\'_blank\')">' + t('cd_file') + '</button>';
   if (c.canEdit) fb += '<button class="save-btn" onclick="closeContractDetail();openEditContract(' + c.row + ')">' + t('cd_edit') + '</button>';
   if (c.canDelete) fb += '<button class="fb-del" onclick="delContract(' + c.row + ')">' + t('cd_del') + '</button>';
@@ -1277,6 +1298,20 @@ function openContractDetail(row){
   document.getElementById('ctDetailModal').classList.add('open');
 }
 function closeContractDetail(){ document.getElementById('ctDetailModal').classList.remove('open'); }
+
+// #3 กด "ชำระแล้ว" → บันทึกที่ backend แล้วเอารายการ/จุดในปฏิทินออก (รอบเดือนนี้)
+async function markContractPaid(row){
+  const c = findContractRow(row); if (!c) return;
+  try {
+    const j = await api('contractMarkPaid', { row: row });
+    if (j && j.ok) {
+      c.paidThruISO = j.paidThru || '';
+      c.dueToday = false; c.daysOverdue = 0; c.paidThisCycle = true;
+      buildCalendar(); renderReminders();
+      showToast(t('ct_paid_ok'));
+    } else showToast('⚠️ ' + ((j && (j.reason || j.msg)) || ''));
+  } catch (e) { if (e.message !== 'unauthorized') showToast('⚠️ ' + e.message); }
+}
 
 // ── CONTRACT ADD / EDIT ──
 const CFF = ['code','project','type','status','startDate','duration','renewDate','endDate','payDay','rent','tenantName','tenantTel','ownerTel','deposit','place','coAgent','geo','contractFile'];
