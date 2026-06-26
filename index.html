@@ -218,7 +218,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 .rm { display: flex; gap: 8px; align-items: center; background: #f8fafc; border: 1px solid #eef2f7; border-left: 3px solid #16a34a; border-radius: 8px; padding: 7px 8px; cursor: pointer; }
 .rm:hover { background: #eef4fb; }
 .rm.r-exp { border-left-color: #dd6b20; } .rm.r-renew { border-left-color: #d69e2e; }
-.rm-paid { flex-shrink: 0; background: #16a34a; color: #fff; border: none; border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.rm-paid { flex-shrink: 0; background: #f6c244; color: #7c4700; border: none; border-radius: 7px; padding: 5px 9px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .rm-paid:hover { filter: brightness(1.08); }
 .rm-ph { width: 42px; height: 42px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #e2e8f0; }
 .rm-ph img { width: 100%; height: 100%; object-fit: cover; }
@@ -512,7 +512,7 @@ const T = {
     btn_add_contract:'📑 เพิ่มสัญญา',
     leg_due:'เก็บค่าเช่า', leg_exp:'หมดสัญญา', leg_renew:'แจ้งต่อ',
     rm_title:'🔔 แจ้งเตือน', rm_all:'↩ ทั้งหมด', rm_empty:'— ไม่มีรายการ —', rm_day:'📅 วันที่',
-    rd_due_today:'💰 จ่ายค่าเช่าวันนี้', rd_collect:'💰 เก็บค่าเช่า', rd_expire:'⏳ หมดสัญญา', rd_renew_due:'🔁 แจ้งต่อสัญญา', rd_renew_in:'🔁 แจ้งต่อใน',
+    rd_due_today:'💰 จ่ายค่าเช่าวันนี้', rd_collect:'💰 เก็บค่าเช่า', rd_expire:'⏳ หมดสัญญา', rd_renew_due:'🔁 แจ้งต่อสัญญา', rd_renew_in:'🔁 แจ้งต่อใน', rd_renew_today:'🔁 แจ้งต่อสัญญาวันนี้', rd_renew_over:'🔁 เลยกำหนดแจ้งต่อ',
     ct_unit_days:'วัน', ct_ended:'หมดแล้ว', ct_end_today:'หมดวันนี้', ct_end_in:'หมดใน',
     cd_due:'💰 ครบกำหนดเก็บค่าเช่าวันนี้', cd_renew_msg:'🔁 ควรแจ้งต่อสัญญา', cd_title:'รายละเอียดสัญญา',
     cd_k_code:'รหัสทรัพย์', cd_k_type:'ประเภท', cd_k_status:'สถานะ', cd_k_rent:'ค่าเช่า', cd_k_start:'เริ่มสัญญา', cd_k_end:'หมดสัญญา', cd_k_renew:'แจ้งต่อสัญญา', cd_k_duration:'ระยะเวลา', cd_k_payday:'จ่ายทุกวันที่', cd_k_deposit:'เงินประกัน', cd_k_tenant:'ชื่อผู้เช่า', cd_k_tenanttel:'เบอร์ผู้เช่า', cd_k_ownertel:'เบอร์เจ้าของ', cd_k_coagent:'Co-Agent', cd_k_place:'สถานที่', cd_k_registrant:'ผู้ลงทะเบียน',
@@ -520,7 +520,7 @@ const T = {
     cd_close:'ปิด', cd_file:'📄 ไฟล์', cd_edit:'✏️ แก้ไข', cd_del:'🗑️ ลบ',
     ct_form_add:'📑 เพิ่มสัญญา', ct_form_edit:'✏️ แก้ไขสัญญา',
     ct_need_code:'⚠️ ใส่รหัสหรือชื่อโครงการ', ct_saved:'💾 บันทึกแล้ว', ct_deleted:'🗑️ ลบแล้ว', ct_edit_only:'🔒 แก้ได้เฉพาะของคุณเอง', ct_del_confirm:'ลบสัญญา',
-    ct_paid_btn:'✓ ชำระแล้ว', ct_paid_ok:'✅ บันทึกการชำระค่าเช่าแล้ว', rd_overdue:'⏰ เลยกำหนด'
+    ct_paid_btn:'⏳ รอชำระ', ct_paid_ok:'✅ บันทึกการชำระค่าเช่าแล้ว', rd_overdue:'⏰ เลยกำหนด'
   },
   en: {
     app_title:'👥 Rental Customer Database', app_sub:'Customers who contacted but haven’t rented yet — follow up to close',
@@ -564,7 +564,7 @@ const T = {
     btn_add_contract:'📑 Add Contract',
     leg_due:'Rent due', leg_exp:'Lease ends', leg_renew:'Renewal',
     rm_title:'🔔 Reminders', rm_all:'↩ All', rm_empty:'— No reminders —', rm_day:'📅',
-    rd_due_today:'💰 Rent due today', rd_collect:'💰 Collect rent', rd_expire:'⏳ Lease ends', rd_renew_due:'🔁 Renew lease', rd_renew_in:'🔁 Renew in',
+    rd_due_today:'💰 Rent due today', rd_collect:'💰 Collect rent', rd_expire:'⏳ Lease ends', rd_renew_due:'🔁 Renew lease', rd_renew_in:'🔁 Renew in', rd_renew_today:'🔁 Renew today', rd_renew_over:'🔁 Renewal overdue',
     ct_unit_days:'days', ct_ended:'ended', ct_end_today:'ends today', ct_end_in:'ends in',
     cd_due:'💰 Rent is due today', cd_renew_msg:'🔁 Lease renewal due', cd_title:'Contract details',
     cd_k_code:'Property code', cd_k_type:'Type', cd_k_status:'Status', cd_k_rent:'Rent', cd_k_start:'Start', cd_k_end:'Ends', cd_k_renew:'Renew by', cd_k_duration:'Duration', cd_k_payday:'Pay day', cd_k_deposit:'Deposit', cd_k_tenant:'Tenant', cd_k_tenanttel:'Tenant tel', cd_k_ownertel:'Owner tel', cd_k_coagent:'Co-Agent', cd_k_place:'Location', cd_k_registrant:'Registered by',
@@ -572,7 +572,7 @@ const T = {
     cd_close:'Close', cd_file:'📄 File', cd_edit:'✏️ Edit', cd_del:'🗑️ Delete',
     ct_form_add:'📑 Add Contract', ct_form_edit:'✏️ Edit Contract',
     ct_need_code:'⚠️ Enter a code or project name', ct_saved:'💾 Saved', ct_deleted:'🗑️ Deleted', ct_edit_only:'🔒 You can only edit your own', ct_del_confirm:'Delete contract',
-    ct_paid_btn:'✓ Paid', ct_paid_ok:'✅ Rent payment recorded', rd_overdue:'⏰ Overdue'
+    ct_paid_btn:'⏳ Pending', ct_paid_ok:'✅ Rent payment recorded', rd_overdue:'⏰ Overdue'
   }
 };
 function getLang() { try { return localStorage.getItem(LANG_KEY) || 'th'; } catch (e) { return 'th'; } }
@@ -1243,7 +1243,11 @@ function renderReminders(){
         items.push({ c:c, kind:'due', reason: head + ' ฿' + money(c.rent), sort: od > 0 ? -od : 0 });   // เลยกำหนดมาก = ขึ้นบนสุด
       }
       else if (c.expiring) items.push({ c:c, kind:'exp', reason: '⏳ ' + ctDaysLabel(c), sort: 1 + (c.daysToEnd || 0) });
-      else if (c.renewDue) items.push({ c:c, kind:'renew', reason: t('rd_renew_in') + ' ' + c.daysToRenew + ' ' + t('ct_unit_days'), sort: 100 + (c.daysToRenew || 0) });
+      else if (c.renewDue) {
+        const dr = c.daysToRenew;
+        const rr = (dr === 0) ? t('rd_renew_today') : (dr < 0 ? (t('rd_renew_over') + ' ' + (-dr) + ' ' + t('ct_unit_days')) : (t('rd_renew_in') + ' ' + dr + ' ' + t('ct_unit_days')));
+        items.push({ c:c, kind:'renew', reason: rr, sort: 100 + (dr <= 0 ? dr : 0) });
+      }
     });
     items.sort(function(a, b){ return (a.sort || 0) - (b.sort || 0); });
   }
@@ -1251,7 +1255,7 @@ function renderReminders(){
   list.innerHTML = items.map(function(it){
     const c = it.c;
     const ph = c.thumb ? '<img src="' + photoUrl(c.thumb, 120) + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div class=&quot;noimg&quot;>🏠</div>\'">' : '<div class="noimg">🏠</div>';
-    const paidBtn = (c.dueToday && c.canEdit)   // #3 ปุ่มชำระแล้ว — เฉพาะรายการค่าเช่าที่ถึงกำหนด
+    const paidBtn = (it.kind === 'due' && c.canCollect && c.canEdit)   // ปุ่มรอชำระ — รายการค่าเช่าที่ยังค้างเก็บ (รวมจ่ายล่วงหน้า)
       ? '<button class="rm-paid" onclick="event.stopPropagation();markContractPaid(' + c.row + ')">' + t('ct_paid_btn') + '</button>' : '';
     return '<div class="rm r-' + it.kind + '" onclick="openContractDetail(' + c.row + ')">' +
       '<div class="rm-ph">' + ph + '</div>' +
@@ -1290,7 +1294,7 @@ function openContractDetail(row){
   '</div>';
   const foot = document.getElementById('ctDtFoot');
   let fb = '<button class="cancel-btn" style="flex:1" onclick="closeContractDetail()">' + t('cd_close') + '</button>';
-  if (c.dueToday && c.canEdit) fb += '<button class="save-btn" style="background:#16a34a" onclick="closeContractDetail();markContractPaid(' + c.row + ')">' + t('ct_paid_btn') + '</button>';
+  if (c.canCollect && c.canEdit) fb += '<button class="save-btn" style="background:#f6c244;color:#7c4700" onclick="closeContractDetail();markContractPaid(' + c.row + ')">' + t('ct_paid_btn') + '</button>';
   if (c.contractFile) fb += '<button class="save-btn" onclick="window.open(\'' + escapeAttr(c.contractFile) + '\',\'_blank\')">' + t('cd_file') + '</button>';
   if (c.canEdit) fb += '<button class="save-btn" onclick="closeContractDetail();openEditContract(' + c.row + ')">' + t('cd_edit') + '</button>';
   if (c.canDelete) fb += '<button class="fb-del" onclick="delContract(' + c.row + ')">' + t('cd_del') + '</button>';
@@ -1306,7 +1310,7 @@ async function markContractPaid(row){
     const j = await api('contractMarkPaid', { row: row });
     if (j && j.ok) {
       c.paidThruISO = j.paidThru || '';
-      c.dueToday = false; c.daysOverdue = 0; c.paidThisCycle = true;
+      c.dueToday = false; c.daysOverdue = 0; c.paidThisCycle = true; c.canCollect = false;
       buildCalendar(); renderReminders();
       showToast(t('ct_paid_ok'));
     } else showToast('⚠️ ' + ((j && (j.reason || j.msg)) || ''));
