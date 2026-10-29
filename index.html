@@ -418,6 +418,8 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
     <div class="form-body">
       <p id="tgTestHint" style="font-size:13px;color:#4a5568;margin-bottom:14px">ส่งการ์ด 1 ใบไปยังผู้บันทึกของทรัพย์ที่เลือก ปุ่มในการ์ดทดสอบไม่เปลี่ยนข้อมูลชำระเงินจริง</p>
       <div class="field"><label for="tgTestContract" id="tgTestSelectLabel">เลือกทรัพย์</label><select id="tgTestContract" onchange="resetTelegramTest()"></select></div>
+      <div class="field" style="margin-top:12px"><label for="tgTestDate" id="tgTestDateLabel">จำลองวันที่ (พ.ศ. / ค.ศ. ตามปฏิทินอุปกรณ์)</label><input type="date" id="tgTestDate" min="2000-01-01" max="2100-12-31" onchange="loadTelegramTestOptions()"></div>
+      <p id="tgTestDateHint" style="font-size:12px;color:#718096;margin-top:8px">ใช้วันที่เลือกคำนวณงวดและสถานะ ส่งตัวอย่างทันที ไม่ใช่ตั้งเวลาส่ง</p>
       <p id="tgTestStatus" role="status" aria-live="polite" style="font-size:13px;margin-top:14px;white-space:pre-wrap"></p>
     </div>
     <div class="form-foot"><button class="cancel-btn" onclick="closeTelegramTest()" id="tgTestClose">ปิด</button><button class="save-btn" id="tgTestSend" onclick="sendTelegramTest()" disabled>ส่งการ์ดทดสอบ 1 ใบ</button></div>
@@ -1358,7 +1360,7 @@ function openEditContract(row){
 }
 function closeContractForm(){ document.getElementById('ctFormModal').classList.remove('open'); }
 
-let tgTestOptions = [], tgTestRequestId = '', tgTestBusy = false;
+let tgTestOptions = [], tgTestRequestId = '', tgTestBusy = false, tgTestLoadSeq = 0;
 function tgTestText(th, en) { return getLang() === 'th' ? th : en; }
 function resetTelegramTest() {
   tgTestRequestId = crypto.randomUUID();
@@ -1367,7 +1369,8 @@ function resetTelegramTest() {
   btn.textContent = tgTestText('ส่งการ์ดทดสอบ 1 ใบ', 'Send one test card');
   btn.disabled = tgTestBusy || !option || !option.linked;
   document.getElementById('tgTestStatus').textContent = option ? (option.linked
-    ? tgTestText('ผู้รับ: ', 'Recipient: ') + option.registrant + ' • Telegram'
+    ? tgTestText('ผู้รับ: ', 'Recipient: ') + option.registrant + ' • Telegram' + '\n' + tgTestText('งวดครบกำหนด: ', 'Due date: ') + option.cycle +
+      (option.reminderState ? '\n' + option.reminderState + '\n' + (option.wouldNotify ? tgTestText('ถึงรอบแจ้งเตือนอัตโนมัติหากเปิดใช้งาน', 'Eligible for an automatic reminder when enabled') : tgTestText('วันนี้ระบบรายวันจะยังไม่เตือน แต่ส่งตัวอย่างได้', 'No daily reminder on this date; a sample can still be sent')) : '')
     : tgTestText('ผู้บันทึกยังไม่ได้ผูก Telegram กรุณาผูกบัญชีก่อน', 'The recorder has not linked Telegram yet.')) : '';
 }
 async function openTelegramTest() {
@@ -1377,12 +1380,26 @@ async function openTelegramTest() {
   document.getElementById('tgTestTitle').textContent = tgTestText('✈️ ทดสอบการแจ้งเตือนบัญชีที่ผูกไว้', '✈️ Test linked account notifications');
   document.getElementById('tgTestHint').textContent = tgTestText('ส่งการ์ด 1 ใบไปยังผู้บันทึกของทรัพย์ที่เลือก ปุ่มในการ์ดทดสอบไม่เปลี่ยนข้อมูลชำระเงินจริง', 'Send one card to the selected property recorder. Test buttons do not change actual payment records.');
   document.getElementById('tgTestSelectLabel').textContent = tgTestText('เลือกทรัพย์', 'Select a property');
+  document.getElementById('tgTestDateLabel').textContent = tgTestText('จำลองวันที่', 'Simulated date');
+  document.getElementById('tgTestDateHint').textContent = tgTestText('คำนวณจากสถานะชำระปัจจุบัน ส่งตัวอย่างทันที ไม่ใช่ตั้งเวลาส่ง และไม่เปิดการแจ้งเตือนรายวัน', 'Uses current payment records. Sends a sample now; does not schedule or enable daily reminders.');
+  const todayParts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Bangkok', year:'numeric', month:'2-digit', day:'2-digit'}).formatToParts(new Date()).map(p => [p.type,p.value]));
+  document.getElementById('tgTestDate').value = todayParts.year + '-' + todayParts.month + '-' + todayParts.day;
   document.getElementById('tgTestClose').textContent = tgTestText('ปิด', 'Close');
+  await loadTelegramTestOptions();
+}
+async function loadTelegramTestOptions() {
+  if (tgTestBusy) return;
+  const dateInput = document.getElementById('tgTestDate');
+  if (!dateInput.value || !dateInput.checkValidity()) { tgTestOptions = []; resetTelegramTest(); document.getElementById('tgTestStatus').textContent = tgTestText('กรุณาเลือกวันที่ทดสอบให้ถูกต้อง', 'Choose a valid test date'); return; }
+  const seq = ++tgTestLoadSeq, asOf = dateInput.value;
+  const previous = document.getElementById('tgTestContract').value;
+  tgTestOptions = [];
   const select = document.getElementById('tgTestContract'); select.replaceChildren(); select.disabled = true;
   document.getElementById('tgTestSend').disabled = true;
   document.getElementById('tgTestStatus').textContent = tgTestText('กำลังโหลดทรัพย์และผู้รับ...', 'Loading properties and recipients...');
   try {
-    const result = await api('tgRentTestOptions');
+    const result = await api('tgRentTestOptions', { asOf });
+    if (seq !== tgTestLoadSeq) return;
     if (!result || !result.ok) throw new Error((result && result.msg) || tgTestText('โหลดรายการไม่สำเร็จ', 'Could not load properties'));
     tgTestOptions = result.data || [];
     tgTestOptions.forEach(c => {
@@ -1393,28 +1410,29 @@ async function openTelegramTest() {
     if (!tgTestOptions.length) {
       document.getElementById('tgTestStatus').textContent = tgTestText('ไม่มีสัญญาที่ทดสอบได้ในสิทธิ์ของคุณ', 'No eligible contracts are available for your account.'); return;
     }
-    const firstLinked = tgTestOptions.find(c => c.linked); if (firstLinked) select.value = firstLinked.id;
+    const firstLinked = tgTestOptions.find(c => c.id === previous) || tgTestOptions.find(c => c.linked); if (firstLinked) select.value = firstLinked.id;
     select.disabled = false; resetTelegramTest(); select.focus();
-  } catch (e) { document.getElementById('tgTestStatus').textContent = '⚠️ ' + e.message; }
+  } catch (e) { if (seq === tgTestLoadSeq) document.getElementById('tgTestStatus').textContent = '⚠️ ' + e.message; }
 }
 function closeTelegramTest() { if (!tgTestBusy) document.getElementById('telegramTestModal').classList.remove('open'); }
 async function sendTelegramTest() {
   const c = tgTestOptions.find(c => c.id === document.getElementById('tgTestContract').value);
-  if (tgTestBusy || !c || !c.linked) return;
+  const dateInput = document.getElementById('tgTestDate');
+  if (tgTestBusy || !c || !c.linked || !dateInput.value || !dateInput.checkValidity() || c.asOf !== dateInput.value) return;
   const auth = getAuth(); if (!auth) { showAuth(); return; }
   const btn = document.getElementById('tgTestSend'), status = document.getElementById('tgTestStatus');
-  tgTestBusy = true; btn.disabled = true; document.getElementById('tgTestContract').disabled = true;
+  tgTestBusy = true; btn.disabled = true; document.getElementById('tgTestContract').disabled = true; dateInput.disabled = true;
   status.textContent = tgTestText('กำลังส่งการ์ด 1 ใบ...', 'Sending one card...');
   let success = false;
   try {
     const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'tgRentTestCard',
-      user: auth.user, pass: auth.pass, contractId: c.id, cycle: c.cycle, version: c.version, requestId: tgTestRequestId }) });
+      user: auth.user, pass: auth.pass, contractId: c.id, cycle: c.cycle, version: c.version, asOf: c.asOf, requestId: tgTestRequestId }) });
     const result = await response.json();
     if (!result || !result.ok) throw new Error((result && result.msg) || tgTestText('ส่งไม่สำเร็จ', 'Sending failed'));
     success = true; status.textContent = '✅ ' + result.msg + (result.hasPhoto === false ? tgTestText('\nไม่พบรูปที่พร้อมส่ง จึงส่งการ์ดข้อความแทน', '\nA text card was sent because no usable photo was found.') : '');
     btn.textContent = tgTestText('ส่งแล้ว', 'Sent');
   } catch (e) { status.textContent = '⚠️ ' + e.message + tgTestText('\nหากยังไม่ทราบผล กรุณาตรวจ Telegram ก่อนลองซ้ำ', '\nIf the result is unclear, check Telegram before retrying.'); }
-  finally { tgTestBusy = false; btn.disabled = success; document.getElementById('tgTestContract').disabled = false; }
+  finally { tgTestBusy = false; btn.disabled = success; document.getElementById('tgTestContract').disabled = false; dateInput.disabled = false; }
 }
 async function submitContractForm(){
   const row = document.getElementById('fc_row').value;
@@ -1451,4 +1469,3 @@ else init();
 </script>
 </body>
 </html>
-
