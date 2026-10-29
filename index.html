@@ -1443,6 +1443,7 @@ async function pollTelegramTestBatch(id, seq) {
   } catch(e) {
     if (seq !== tgTestLoadSeq || id !== tgTestBatchId) return;
     document.getElementById('tgTestStatus').textContent = tgTestText('ยังอ่านสถานะไม่ได้ งานที่รับแล้วยังคงส่งต่อ กรุณาตรวจ Telegram', 'Status is unavailable; queued sending continues. Please check Telegram.');
+    setTimeout(() => pollTelegramTestBatch(id,seq),5000);
   }
 }
 async function submitContractForm(){
