@@ -306,7 +306,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
       <button class="btn" onclick="loadData()" data-i18n="btn_reload">🔄 โหลดข้อมูล</button>
       <button class="btn btn-add" onclick="openAdd()" data-i18n="btn_add">➕ เพิ่มลูกค้าใหม่</button>
       <button class="btn-ghost" onclick="openAddContract()" data-i18n="btn_add_contract">📑 เพิ่มสัญญา</button>
-      <button class="btn-ghost" id="telegramTestBtn" onclick="openTelegramTest()" data-i18n="btn_tg_test">✈️ ทดสอบ Telegram</button>
+      <button class="btn-ghost" id="telegramTestBtn" onclick="openTelegramTest()" data-i18n="btn_tg_test">✈️ ทดสอบการแจ้งเตือนบัญชีที่ผูกไว้</button>
       <a class="btn-ghost" id="catalogLink" href="#" target="_blank" rel="noopener" style="display:none" data-i18n="btn_catalog">🏠 แคทตาลอกเช่า</a>
       <a class="btn-ghost" id="saleLink" href="#" target="_blank" rel="noopener" style="display:none" data-i18n="btn_sale">🏷️ ทรัพย์ขาย</a>
       <a class="btn-ghost" id="schedLink" href="#" target="_blank" rel="noopener" style="display:none" data-i18n="btn_sched">🗓️ ตารางโพส</a>
@@ -414,7 +414,7 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; color: 
 
 <div class="modal-overlay" id="telegramTestModal" role="dialog" aria-modal="true" aria-labelledby="tgTestTitle">
   <div class="form-box">
-    <div class="form-head"><h2 id="tgTestTitle">✈️ ทดสอบ Telegram</h2><button class="x" onclick="closeTelegramTest()" aria-label="ปิด">×</button></div>
+    <div class="form-head"><h2 id="tgTestTitle">✈️ ทดสอบการแจ้งเตือนบัญชีที่ผูกไว้</h2><button class="x" onclick="closeTelegramTest()" aria-label="ปิด">×</button></div>
     <div class="form-body">
       <p id="tgTestHint" style="font-size:13px;color:#4a5568;margin-bottom:14px">ส่งการ์ด 1 ใบไปยังผู้บันทึกของทรัพย์ที่เลือก ปุ่มในการ์ดทดสอบไม่เปลี่ยนข้อมูลชำระเงินจริง</p>
       <div class="field"><label for="tgTestContract" id="tgTestSelectLabel">เลือกทรัพย์</label><select id="tgTestContract" onchange="resetTelegramTest()"></select></div>
@@ -526,7 +526,7 @@ const T = {
     mem_note_designer:'ปรับระดับได้จาก dropdown (เฉพาะผู้ออกแบบ) · ลบได้เฉพาะระดับต่ำกว่าคุณ', mem_note_admin:'ลบได้เฉพาะระดับต่ำกว่าคุณ · ปรับระดับทำได้เฉพาะผู้ออกแบบ', mem_note_pwd:'(เปลี่ยนรหัส = แก้ในชีต)', mem_accounts:'บัญชี', mem_you:'(คุณ)', mem_del:'🗑️ ลบ',
     c_confirm_delmem:'ลบสมาชิก',
     // ── สัญญา + แจ้งเตือน ──
-    btn_add_contract:'📑 เพิ่มสัญญา', btn_tg_test:'✈️ ทดสอบ Telegram',
+    btn_add_contract:'📑 เพิ่มสัญญา', btn_tg_test:'✈️ ทดสอบการแจ้งเตือนบัญชีที่ผูกไว้',
     leg_due:'เก็บค่าเช่า', leg_exp:'หมดสัญญา', leg_renew:'แจ้งต่อ',
     rm_title:'🔔 แจ้งเตือน', rm_all:'↩ ทั้งหมด', rm_empty:'— ไม่มีรายการ —', rm_day:'📅 วันที่',
     rd_due_today:'💰 จ่ายค่าเช่าวันนี้', rd_collect:'💰 เก็บค่าเช่า', rd_expire:'⏳ หมดสัญญา', rd_renew_due:'🔁 แจ้งต่อสัญญา', rd_renew_in:'🔁 แจ้งต่อใน', rd_renew_today:'🔁 แจ้งต่อสัญญาวันนี้', rd_renew_over:'🔁 เลยกำหนดแจ้งต่อ',
@@ -578,7 +578,7 @@ const T = {
     mem_note_designer:'Change roles via dropdown (Owner only) · delete only lower roles', mem_note_admin:'Delete only lower roles · role change is Owner-only', mem_note_pwd:'(change password = edit in sheet)', mem_accounts:'accounts', mem_you:'(you)', mem_del:'🗑️ Delete',
     c_confirm_delmem:'Delete member',
     // ── contracts + reminders ──
-    btn_add_contract:'📑 Add Contract', btn_tg_test:'✈️ Test Telegram',
+    btn_add_contract:'📑 Add Contract', btn_tg_test:'✈️ Test linked account notifications',
     leg_due:'Rent due', leg_exp:'Lease ends', leg_renew:'Renewal',
     rm_title:'🔔 Reminders', rm_all:'↩ All', rm_empty:'— No reminders —', rm_day:'📅',
     rd_due_today:'💰 Rent due today', rd_collect:'💰 Collect rent', rd_expire:'⏳ Lease ends', rd_renew_due:'🔁 Renew lease', rd_renew_in:'🔁 Renew in', rd_renew_today:'🔁 Renew today', rd_renew_over:'🔁 Renewal overdue',
@@ -1374,7 +1374,7 @@ async function openTelegramTest() {
   if (!isLoggedIn()) { showAuth(); return; }
   if (tgTestBusy) return;
   const modal = document.getElementById('telegramTestModal'); modal.classList.add('open');
-  document.getElementById('tgTestTitle').textContent = tgTestText('✈️ ทดสอบ Telegram', '✈️ Test Telegram');
+  document.getElementById('tgTestTitle').textContent = tgTestText('✈️ ทดสอบการแจ้งเตือนบัญชีที่ผูกไว้', '✈️ Test linked account notifications');
   document.getElementById('tgTestHint').textContent = tgTestText('ส่งการ์ด 1 ใบไปยังผู้บันทึกของทรัพย์ที่เลือก ปุ่มในการ์ดทดสอบไม่เปลี่ยนข้อมูลชำระเงินจริง', 'Send one card to the selected property recorder. Test buttons do not change actual payment records.');
   document.getElementById('tgTestSelectLabel').textContent = tgTestText('เลือกทรัพย์', 'Select a property');
   document.getElementById('tgTestClose').textContent = tgTestText('ปิด', 'Close');
